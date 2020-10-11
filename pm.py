@@ -27,7 +27,6 @@ pm_headers = {
 	"Access-Token": PM_ACCESSTOKEN,
 	"User-Agent": PM_USERAGENT,
 	"Connection": "keep-alive",
-	"Accept": "*/*",
 	"Terms-Version": "1",
 }
 
@@ -117,8 +116,8 @@ def wroteBack(pmlist):
 	with open("output/pm.js", "w", encoding="UTF-8") as f:
 		f.write("var pm_list = Array();")
 		for pm in pmlist:
-			fmt = 'pm_list.push({"id": "%s", "member": "%s", "time": "%s", "subject": "%s", "preview": "%s", "time": "%s"});'
-			f.write(fmt % (pm.id, pm.member, pm.time, pm.subject.replace("\"", "\\\""), pm.body_preview.replace("\"", "\\\""), pm.time))
+			fmt = 'pm_list.push({"id": "%s", "member": "%s", "subject": "%s", "preview": "%s", "time": "%s"});'
+			f.write(fmt % (pm.id, pm.member, pm.subject.replace("\"", "\\\""), pm.body_preview.replace("\"", "\\\""), pm.time))
 
 if __name__ == "__main__":
 	pm_list = getPMList()
