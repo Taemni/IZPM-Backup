@@ -54,7 +54,7 @@ class PrivateMail:
 		res = pmGet(url).text
 
 		# resolve relative path
-		res = res.replace("/css/starship.css", "../static/starship.css")
+		res = res.replace('<link href="/css/starship.css" rel="stylesheet">', '').replace('<script type="text/javascript" src="/js/jquery-3.3.1.min.js"></script>', '').replace('<script type="text/javascript" src="/js/mail-detail.js"></script>', '')
 
 		#found all image
 		if self.image:
