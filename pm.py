@@ -14,6 +14,9 @@ PM_OSTYPE = ""
 PM_OSVERSION = ""
 PM_USERAGENT = ""
 
+#마지막 저장된 메일 ID
+mail_id = ''
+
 pm_headers = {
 	"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 	"Application-Version": PM_APPVER,
@@ -88,12 +91,18 @@ class PrivateMail:
 def getPMList():
 	pm_list = []
 	idx = 1
+	is_break = 0
 	target = "https://app-api.izone-mail.com/v1/inbox?is_star=0&is_unread=0&page=%d"
 	
 	while True:
 		whole_data = json.loads(pmGet(target % idx).text)
 		print("[+] Fetching page %d" % idx)
 		for pm_data in whole_data["mails"]:
+			# 마지막으로 저장한 메일 ID
+			if pm_data['id'] == mail_id:
+				is_break = 1
+				break
+
 			pm = PrivateMail()
 			
 			pm.id = pm_data["id"]
@@ -105,6 +114,9 @@ def getPMList():
 			pm.body_preview = pm_data["content"][:45]
 
 			pm_list.append(pm)
+
+		if is_break:
+			break
 
 		if not whole_data["has_next_page"]:
 			break
