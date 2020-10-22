@@ -26,3 +26,23 @@ Python + Requests + Pymysql
  - Os-Version : PM_OSVERSION
  - User-Agent : PM_USERAGENT
 3. pm.py를 실행합니다. 모든 메일은 `output/mail` 폴더에 저장되며, 모든 이미지는 `output/image/mail`에 저장됩니다.
+
+## MySQL 테이블
+```
+CREATE TABLE `private_mail` (
+	`idx` INT(11) NOT NULL AUTO_INCREMENT,
+	`id` VARCHAR(11) NOT NULL DEFAULT '' COLLATE 'utf8mb4_unicode_ci',
+	`member` VARCHAR(11) NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`subject` MEDIUMTEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`preview` VARCHAR(50) NOT NULL DEFAULT '0' COLLATE 'utf8mb4_unicode_ci',
+	`content` TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
+	`time` DATETIME NOT NULL,
+	`img` VARCHAR(11) NOT NULL DEFAULT 'N' COLLATE 'utf8mb4_unicode_ci',
+	PRIMARY KEY (`idx`),
+	INDEX `id` (`id`)
+)
+COLLATE='utf8mb4_unicode_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=1
+;
+```
