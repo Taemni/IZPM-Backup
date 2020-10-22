@@ -9,7 +9,7 @@
 ```
 
 ## 준비물
-Python + Requests
+Python + Requests + Pymysql
 
 ## 뭐하는 툴인가요
 사용자가 수신한 모든 프라이빗 메일과 사진을 HTML 파일로 저장 및 DB에 등록합니다.
