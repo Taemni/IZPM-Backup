@@ -12,9 +12,6 @@ PM_OSTYPE = ""
 PM_OSVERSION = ""
 PM_USERAGENT = ""
 
-#마지막 저장된 메일 ID
-mail_id = ''
-
 pm_headers = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Application-Version": PM_APPVER,
@@ -85,18 +82,35 @@ class PrivateMail:
         with open("output/mail/%s.html" % self.id, "w", encoding="UTF-8") as f:
             f.write(self.body)
 
+        # 이미지 첨부 여부
+        if self.image:
+            img = 'Y'
+        else:
+            img = 'N'
+
+        # 오늘 날짜 처리
+        today_year = datetime.today().year
+        if str(today_year) not in self.time:
+            self.time = f'{datetime.today().year}/{datetime.today().month}/{datetime.today().day} {self.time}'
+
+        # 데이터베이스 등록
+        sql = f"INSERT INTO private_mail (`id`, `member`, `subject`, `preview`, `content`, `time`, `img`) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        sql_data = (self.id, self.member, self.subject, self.body_preview, self.body, self.time.replace('/', '-'), img)
+        dbms.ExecuteWriteSQL(sql, sql_data)
+
 def getPMList():
     pm_list = []
     idx = 1
     is_break = 0
     target = "https://app-api.izone-mail.com/v1/inbox?is_star=0&is_unread=0&page=%d"
-    
+    last_id = dbms.ExecuteReadSQL(f"SELECT id FROM private_mail order by idx desc limit 1")[0][0]
+
     while True:
         whole_data = json.loads(pmGet(target % idx).text)
         print("[+] Fetching page %d" % idx)
         for pm_data in whole_data["mails"]:
             # 마지막으로 저장한 메일 ID
-            if pm_data['id'] == mail_id:
+            if pm_data['id'] == last_id:
                 is_break = 1
                 break
 
@@ -131,11 +145,12 @@ def wroteBack(pmlist):
 
 if __name__ == "__main__":
     pm_list = getPMList()
-    input("\nPress Enter to continue...")
-    for x in pm_list:
-        x.writeOut()
 
-    print("[*] Writing local database")
-    wroteBack(pm_list)
-    print("[*] Writing done")
+    # DB에 등록되지 않은 메일이 있으면 실행
+    if pm_list:
+        for x in reversed(pm_list):
+            x.writeOut()
 
+        print("[*] Writing local database")
+        wroteBack(pm_list)
+        print("[*] Writing done")
