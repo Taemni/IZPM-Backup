@@ -1,8 +1,6 @@
 #-*- coding: utf-8 -*-
-import os
-import re
-import json
-import requests
+import os, re, json, requests, dbms
+from datetime import datetime
 
 #Private Mail Credentials
 PM_USERID = ""
@@ -18,126 +16,126 @@ PM_USERAGENT = ""
 mail_id = ''
 
 pm_headers = {
-	"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-	"Application-Version": PM_APPVER,
-	"User-Id": PM_USERID,
-	"Accept-Language": "ko-kr",
-	"Accept-Encoding": "gzip, deflate, br",
-	"Device-Version": PM_DEVICE,
-	"Os-Type": PM_OSTYPE,
-	"Os-Version": PM_OSVERSION,
-	"Application-Language": "ko",
-	"Access-Token": PM_ACCESSTOKEN,
-	"User-Agent": PM_USERAGENT,
-	"Connection": "keep-alive",
-	"Terms-Version": "1",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Application-Version": PM_APPVER,
+    "User-Id": PM_USERID,
+    "Accept-Language": "ko-kr",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Device-Version": PM_DEVICE,
+    "Os-Type": PM_OSTYPE,
+    "Os-Version": PM_OSVERSION,
+    "Application-Language": "ko",
+    "Access-Token": PM_ACCESSTOKEN,
+    "User-Agent": PM_USERAGENT,
+    "Connection": "keep-alive",
+    "Terms-Version": "1",
 }
 
 def pmGet(url):
-	return requests.get(url, headers=pm_headers)
+    return requests.get(url, headers=pm_headers)
 
 img_ptn = re.compile('img/.*?\\.(?:jpeg|jpg|png|gif)')
 
 class PrivateMail:
-	def __init__(self):
-		self.id = ""
+    def __init__(self):
+        self.id = ""
+        self.member = ""
+        self.image = False
+        self.time = ""
+        self.subject = ""
+        self.body = ""
+        self.body_preview = ""
 
-		self.member = ""
-		self.image = False
-		self.time = ""
-		self.subject = ""
-		self.body = ""
-		self.body_preview = ""
+    def fetch(self):
+        if self.id == "":
+            raise Exception("PrivateMail ID cannot be null")
 
-	def fetch(self):
-		if self.id == "":
-			raise Exception("PrivateMail ID cannot be null")
+        url = "https://app-web.izone-mail.com/mail/%s" % self.id
+        res = pmGet(url).text
 
-		url = "https://app-web.izone-mail.com/mail/%s" % self.id
-		res = pmGet(url).text
+        # resolve relative path
+        res = res.replace('<link href="/css/starship.css" rel="stylesheet">', '').replace('<script type="text/javascript" src="/js/jquery-3.3.1.min.js"></script>', '').replace('<script type="text/javascript" src="/js/mail-detail.js"></script>', '')
 
-		# resolve relative path
-		res = res.replace('<link href="/css/starship.css" rel="stylesheet">', '').replace('<script type="text/javascript" src="/js/jquery-3.3.1.min.js"></script>', '').replace('<script type="text/javascript" src="/js/mail-detail.js"></script>', '')
+        #found all image
+        if self.image:
+            print("[*] Processing image of mail %s" % self.id)
+            imgs = img_ptn.findall(res)
+            print(imgs)
+            for img in imgs:
+                output_path = "output/" + img
+                remote_path = "https://img.izone-mail.com/upload/" + img
+                if not os.path.exists(os.path.dirname(output_path)):
+                    os.makedirs(os.path.dirname(output_path))
 
-		#found all image
-		if self.image:
-			print("[*] Processing image of mail %s" % self.id)
-			imgs = img_ptn.findall(res)
-			print(imgs)
-			for img in imgs:
-				output_path = "output/" + img
-				remote_path = "https://img.izone-mail.com/upload/" + img
-				if not os.path.exists(os.path.dirname(output_path)):
-					os.makedirs(os.path.dirname(output_path))
+                with open(output_path, "wb") as f:
+                    resp = pmGet(remote_path)
+                    f.write(resp.content)
 
-				with open(output_path, "wb") as f:
-					resp = pmGet(remote_path)
-					f.write(resp.content)
+            res = res.replace("https://img.izone-mail.com/upload/", "../")
 
-			res = res.replace("https://img.izone-mail.com/upload/", "../")
+        self.body = res
 
-		self.body = res
+    def writeOut(self):
+        if self.body == "":
+            self.fetch()
 
-	def writeOut(self):
-		if self.body == "":
-			self.fetch()
+        if not os.path.exists("output/mail/"):
+            os.makedirs("output/mail/")
 
-		if not os.path.exists("output/mail/"):
-			os.makedirs("output/mail/")
-
-		with open("output/mail/%s.html" % self.id, "w", encoding="UTF-8") as f:
-			f.write(self.body)
+        with open("output/mail/%s.html" % self.id, "w", encoding="UTF-8") as f:
+            f.write(self.body)
 
 def getPMList():
-	pm_list = []
-	idx = 1
-	is_break = 0
-	target = "https://app-api.izone-mail.com/v1/inbox?is_star=0&is_unread=0&page=%d"
-	
-	while True:
-		whole_data = json.loads(pmGet(target % idx).text)
-		print("[+] Fetching page %d" % idx)
-		for pm_data in whole_data["mails"]:
-			# 마지막으로 저장한 메일 ID
-			if pm_data['id'] == mail_id:
-				is_break = 1
-				break
+    pm_list = []
+    idx = 1
+    is_break = 0
+    target = "https://app-api.izone-mail.com/v1/inbox?is_star=0&is_unread=0&page=%d"
+    
+    while True:
+        whole_data = json.loads(pmGet(target % idx).text)
+        print("[+] Fetching page %d" % idx)
+        for pm_data in whole_data["mails"]:
+            # 마지막으로 저장한 메일 ID
+            if pm_data['id'] == mail_id:
+                is_break = 1
+                break
 
-			pm = PrivateMail()
-			
-			pm.id = pm_data["id"]
+            pm = PrivateMail()
+            
+            pm.id = pm_data["id"]
 
-			pm.member = pm_data["member"]["name"]
-			pm.image = pm_data["is_image"]
-			pm.time = pm_data["receive_time"]
-			pm.subject = pm_data["subject"]
-			pm.body_preview = pm_data["content"][:45]
+            pm.member = pm_data["member"]["name"]
+            pm.image = pm_data["is_image"]
+            pm.time = pm_data["receive_time"]
+            pm.subject = pm_data["subject"]
+            pm.body_preview = pm_data["content"][:45]
 
-			pm_list.append(pm)
+            pm_list.append(pm)
 
-		if is_break:
-			break
+        if is_break:
+            break
 
-		if not whole_data["has_next_page"]:
-			break
-		idx += 1
-	print("[*] Fetching done - %d mails loaded" % len(pm_list))
-	return pm_list
+        if not whole_data["has_next_page"]:
+            break
+        idx += 1
+
+    print("[*] Fetching done - %d mails loaded" % len(pm_list))
+    return pm_list
 
 def wroteBack(pmlist):
-	with open("output/pm.js", "w", encoding="UTF-8") as f:
-		f.write("var pm_list = Array();")
-		for pm in pmlist:
-			fmt = 'pm_list.push({"id": "%s", "member": "%s", "subject": "%s", "preview": "%s", "time": "%s"});'
-			f.write(fmt % (pm.id, pm.member, pm.subject.replace("\"", "\\\""), pm.body_preview.replace("\"", "\\\""), pm.time))
+    with open("output/pm.js", "w", encoding="UTF-8") as f:
+        f.write("var pm_list = Array();")
+        for pm in pmlist:
+            fmt = 'pm_list.push({"id": "%s", "member": "%s", "subject": "%s", "preview": "%s", "time": "%s"});'
+            f.write(fmt % (pm.id, pm.member, pm.subject.replace("\"", "\\\""), pm.body_preview.replace("\"", "\\\""), pm.time))
 
 if __name__ == "__main__":
-	pm_list = getPMList()
-	input("\nPress Enter to continue...")
-	for x in pm_list:
-		x.writeOut()
+    pm_list = getPMList()
+    input("\nPress Enter to continue...")
+    for x in pm_list:
+        x.writeOut()
 
-	print("[*] Writing local database")
-	wroteBack(pm_list)
-	print("[*] Writing done")
+    print("[*] Writing local database")
+    wroteBack(pm_list)
+    print("[*] Writing done")
 
