@@ -26,7 +26,7 @@ Python + Requests + Pymysql
  - Os-Version : PM_OSVERSION
  - User-Agent : PM_USERAGENT
 
-3. pm.py를 실행합니다. 모든 메일은 `output/mail` 폴더에 저장되며, 모든 이미지는 `output/image/mail`에 저장됩니다.
+3. pm.py를 실행합니다. 모든 메일은 `output/mail` 폴더에 저장되며, 모든 이미지는 `output/img/mail`에 저장됩니다.
 
 ## MySQL 테이블
 ```
