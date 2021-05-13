@@ -36,14 +36,17 @@ CREATE TABLE `private_mail` (
 	`member` VARCHAR(11) NOT NULL COLLATE 'utf8mb4_unicode_ci',
 	`subject` MEDIUMTEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
 	`preview` VARCHAR(50) NOT NULL DEFAULT '0' COLLATE 'utf8mb4_unicode_ci',
+	`content_orig` TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
 	`content` TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
 	`time` DATETIME NOT NULL,
-	`img` VARCHAR(11) NOT NULL DEFAULT 'N' COLLATE 'utf8mb4_unicode_ci',
+	`is_img` INT(11) NOT NULL DEFAULT '0',
+	`is_star` INT(11) NOT NULL DEFAULT '0',
+	`is_unread` INT(11) NOT NULL DEFAULT '1',
 	PRIMARY KEY (`idx`),
 	INDEX `id` (`id`)
 )
 COLLATE='utf8mb4_unicode_ci'
 ENGINE=InnoDB
-AUTO_INCREMENT=1
+AUTO_INCREMENT=8923
 ;
 ```
