@@ -91,11 +91,11 @@ class PrivateMail:
         # 오늘 날짜 처리
         today_year = datetime.today().year
         if str(today_year) not in self.time:
-            self.time = f'{datetime.today().year}/{datetime.today().month}/{datetime.today().day} {self.time}'
+            self.time = f'{datetime.today().year}-{datetime.today().month}-{datetime.today().day} {self.time}'
 
         # 데이터베이스 등록
-        sql = f"INSERT INTO private_mail (`id`, `member`, `subject`, `preview`, `content`, `time`, `img`) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        sql_data = (self.id, self.member, self.subject, self.body_preview, self.body, self.time.replace('/', '-'), img)
+        sql = f"INSERT INTO private_mail (`id`, `member`, `subject`, `preview`, `content`, `time`, `is_img`) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        sql_data = (self.id, self.member, self.subject, self.body_preview, self.body, self.time, img)
         dbms.ExecuteWriteSQL(sql, sql_data)
 
 def getPMList():
